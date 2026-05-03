@@ -1,0 +1,27 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .etsy-gang-text {
+        font-family: 'Arial Black', 'Arial', sans-serif;
+        font-size: 180px;
+        font-weight: 900;
+        fill: #D75A0B;
+        text-anchor: middle;
+        letter-spacing: -2px;
+      }
+    </style>
+  </defs>
+  
+  <!-- Left wing -->
+  <path d="M196 246C231 229 266 222 311 220C282 239 258 257 236 280C215 303 202 324 190 350C172 339 164 328 160 313C157 295 164 269 196 246Z" fill="#D75A0B"/>
+  <path d="M171 314C222 320 259 338 306 377C264 365 230 363 191 366C167 357 153 347 148 334C146 323 154 316 171 314Z" fill="#D75A0B"/>
+  <path d="M172 375C221 386 258 409 299 450C257 440 224 439 182 445C160 436 148 426 144 414C143 402 151 393 172 375Z" fill="#D75A0B"/>
+
+  <!-- Right wing -->
+  <path d="M1004 246C969 229 934 222 889 220C918 239 942 257 964 280C985 303 998 324 1010 350C1028 339 1036 328 1040 313C1043 295 1036 269 1004 246Z" fill="#D75A0B"/>
+  <path d="M1029 314C978 320 941 338 894 377C936 365 970 363 1009 366C1033 357 1047 347 1052 334C1054 323 1046 316 1029 314Z" fill="#D75A0B"/>
+  <path d="M1028 375C979 386 942 409 901 450C943 440 976 439 1018 445C1040 436 1052 426 1056 414C1057 402 1049 393 1028 375Z" fill="#D75A0B"/>
+
+  <!-- Main text: Etsy Gang -->
+  <text x="600" y="550" class="etsy-gang-text">Etsy Gang</text>
+</svg>
