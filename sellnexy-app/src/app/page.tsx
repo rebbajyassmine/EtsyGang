@@ -130,7 +130,6 @@ export default function Home() {
 
   useEffect(() => {
     if (activeTab === 'dashboard') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchListings();
     }
   }, [activeTab]);

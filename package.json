@@ -1,0 +1,16 @@
+{
+  "name": "etsygang-root",
+  "private": true,
+  "workspaces": [
+    "sellnexy-app"
+  ],
+  "scripts": {
+    "dev": "npm --prefix sellnexy-app run dev",
+    "build": "npm --prefix sellnexy-app run build",
+    "pages:build": "npm --prefix sellnexy-app run pages:build",
+    "lint": "npm --prefix sellnexy-app run lint"
+  },
+  "dependencies": {
+    "next": "15.5.2"
+  }
+}
