@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getDatabases } from '@/lib/appwrite';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 type GeneratedListing = {
   productTitle: string;
