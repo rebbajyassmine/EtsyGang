@@ -1,8 +1,6 @@
 import Groq from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { appwriteFetch, getAppwriteConfig } from '@/lib/appwrite';
-
 export const runtime = 'edge';
 
 type GeneratedListing = {
@@ -69,19 +67,10 @@ export async function POST(request: NextRequest) {
     }
 
     const groqApiKey = process.env.GROQ_API_KEY;
-    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-    const collectionId = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID;
 
     if (!groqApiKey) {
       return NextResponse.json(
         { error: 'Missing GROQ_API_KEY environment variable.' },
-        { status: 500 },
-      );
-    }
-
-    if (!databaseId || !collectionId) {
-      return NextResponse.json(
-        { error: 'Missing Appwrite database configuration.' },
         { status: 500 },
       );
     }
@@ -117,27 +106,11 @@ export async function POST(request: NextRequest) {
     const parsed = JSON.parse(extractJsonPayload(content)) as unknown;
     const listing = normalizeListing(parsed);
 
-    // Use Appwrite REST API to save the document (no SDK needed)
-    const config = await getAppwriteConfig();
-    const document = await appwriteFetch(
-      `/databases/${config.databaseId}/collections/${config.collectionId}/documents`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          data: {
-            productName,
-            productTitle: listing.productTitle,
-            productDescription: listing.productDescription,
-            tags: listing.tags.join(', '),
-          },
-        }),
-      }
-    );
-
+    // Return the generated listing
+    // Client will handle saving to localStorage
     return NextResponse.json({
       success: true,
       listing,
-      document,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected server error.';
