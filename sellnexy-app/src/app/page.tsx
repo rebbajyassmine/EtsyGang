@@ -36,6 +36,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'generator' | 'dashboard'>('generator');
   const [savedListings, setSavedListings] = useState<SavedListing[]>([]);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [savingListing, setSavingListing] = useState(false);
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -85,23 +86,45 @@ export default function Home() {
     }
   }
 
+  async function handleSaveListing() {
+    if (!result) return;
+    
+    setSavingListing(true);
+    try {
+      const newId = Date.now().toString();
+      const newListing: SavedListing = {
+        $id: newId,
+        productTitle: result.productTitle,
+        productDescription: result.productDescription,
+        tags: result.tags,
+        $createdAt: new Date().toISOString(),
+      };
+
+      // Save to localStorage
+      const stored = localStorage.getItem('etsygang-listings');
+      const listings = stored ? JSON.parse(stored) : [];
+      const updated = [newListing, ...listings];
+      localStorage.setItem('etsygang-listings', JSON.stringify(updated));
+
+      // Update state
+      setSavedListings(updated);
+      setDocumentId(newId);
+    } catch (error) {
+      console.error('Failed to save listing:', error);
+    } finally {
+      setSavingListing(false);
+    }
+  }
+
   async function fetchListings() {
     setDashboardLoading(true);
     try {
-      const response = await fetch('/api/listings', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch listings.');
-      }
-
-      const data = (await response.json()) as { listings?: SavedListing[] };
-      setSavedListings(data.listings || []);
-    } catch {
+      // Load from localStorage
+      const stored = localStorage.getItem('etsygang-listings');
+      const listings = stored ? JSON.parse(stored) : [];
+      setSavedListings(listings);
+    } catch (error) {
+      console.error('Failed to fetch listings:', error);
       setSavedListings([]);
     } finally {
       setDashboardLoading(false);
@@ -110,21 +133,16 @@ export default function Home() {
 
   async function handleDeleteListing(id: string) {
     try {
-      const response = await fetch('/api/listings', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ documentId: id }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete listing.');
-      }
-
-      setSavedListings(savedListings.filter((l) => l.$id !== id));
-    } catch {
-      // Handle error silently
+      // Remove from localStorage
+      const stored = localStorage.getItem('etsygang-listings');
+      const listings = stored ? JSON.parse(stored) : [];
+      const updated = listings.filter((l: SavedListing) => l.$id !== id);
+      localStorage.setItem('etsygang-listings', JSON.stringify(updated));
+      
+      // Update state
+      setSavedListings(updated);
+    } catch (error) {
+      console.error('Failed to delete listing:', error);
     }
   }
 
@@ -277,6 +295,17 @@ export default function Home() {
                         ))}
                       </div>
                     </div>
+
+                    {!documentId && (
+                      <button
+                        type="button"
+                        onClick={handleSaveListing}
+                        disabled={savingListing}
+                        className="mt-4 w-full rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-6 py-3 text-center font-semibold text-slate-950 transition hover:from-emerald-300 hover:to-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {savingListing ? 'Saving...' : 'Save to Dashboard'}
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-center text-sm text-slate-400">

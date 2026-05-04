@@ -1,10 +1,7 @@
-import { ID } from 'appwrite';
 import Groq from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { databases } from '@/lib/appwrite';
-
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 type GeneratedListing = {
   productTitle: string;
@@ -30,15 +27,18 @@ function normalizeListing(payload: unknown): GeneratedListing {
     throw new Error('AI response was not a JSON object.');
   }
 
-  const candidate = payload as Partial<GeneratedListing> & {
-    tags?: string[] | string;
+  const candidate = payload as Record<string, unknown> & {
+    productTitle?: unknown;
+    productDescription?: unknown;
+    tags?: unknown;
   };
 
-  const tags = Array.isArray(candidate.tags)
-    ? candidate.tags
-    : typeof candidate.tags === 'string'
-      ? candidate.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
-      : [];
+  let tags: string[] = [];
+  if (Array.isArray(candidate.tags)) {
+    tags = candidate.tags as string[];
+  } else if (typeof candidate.tags === 'string') {
+    tags = (candidate.tags as string).split(',').map((tag) => tag.trim()).filter(Boolean);
+  }
 
   if (
     typeof candidate.productTitle !== 'string' ||
@@ -68,8 +68,6 @@ export async function POST(request: NextRequest) {
     }
 
     const groqApiKey = process.env.GROQ_API_KEY;
-    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-    const collectionId = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID;
 
     if (!groqApiKey) {
       return NextResponse.json(
@@ -78,15 +76,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!databaseId || !collectionId) {
-      return NextResponse.json(
-        { error: 'Missing Appwrite database configuration.' },
-        { status: 500 },
-      );
-    }
-
     const groq = new Groq({ apiKey: groqApiKey });
-    const prompt = `Act as an Etsy SEO expert. Given the product name ${productName}, generate a highly optimized Product Title, a list of 13 Tags, and a compelling Product Description. Return the response in a clean JSON format.`;
+    const prompt = `Act as an Etsy SEO expert. Given the product name "${productName}", generate a highly optimized Product Title, a list of 13 Tags, and a compelling Product Description. Return the response in a clean JSON format with keys: productTitle, tags (array of 13 strings), and productDescription.`;
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
@@ -95,7 +86,7 @@ export async function POST(request: NextRequest) {
         {
           role: 'system',
           content:
-            'Return only valid JSON with the keys productTitle, tags, and productDescription. tags must be an array of exactly 13 short Etsy SEO tags.',
+            'Return only valid JSON with the keys productTitle, tags, and productDescription. tags must be an array of exactly 13 short Etsy SEO tags. Do not include any markdown code blocks.',
         },
         {
           role: 'user',
@@ -116,22 +107,9 @@ export async function POST(request: NextRequest) {
     const parsed = JSON.parse(extractJsonPayload(content)) as unknown;
     const listing = normalizeListing(parsed);
 
-    const document = await databases.createDocument(
-      databaseId,
-      collectionId,
-      ID.unique(),
-      {
-        productName,
-        productTitle: listing.productTitle,
-        productDescription: listing.productDescription,
-        tags: listing.tags.join(', '),
-      },
-    );
-
     return NextResponse.json({
       success: true,
       listing,
-      document,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected server error.';
