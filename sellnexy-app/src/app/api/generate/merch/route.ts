@@ -33,13 +33,13 @@ function normalizeListing(payload: unknown): GeneratedListing {
     tags?: unknown;
   };
 
-  // Validate title length (should be 100-140 chars for Etsy optimization)
+  // Validate title length (should be 50-200 chars for Merch)
   const title = typeof candidate.productTitle === 'string' ? candidate.productTitle.trim() : '';
   if (!title || title.length < 40) {
     throw new Error('Title is too short. Must be 40+ characters for good SEO.');
   }
 
-  // Validate description length (should be 250+ chars for good quality)
+  // Validate description length (should be 200+ chars for Merch)
   const description = typeof candidate.productDescription === 'string' ? candidate.productDescription.trim() : '';
   if (!description || description.length < 150) {
     throw new Error('Description is too short. Must be 150+ characters.');
@@ -62,20 +62,8 @@ function normalizeListing(payload: unknown): GeneratedListing {
     throw new Error(`Need at least 10 quality tags. Got ${tags.length}.`);
   }
 
-  // Validate tag quality (should be 2-4 words, not single words)
-  const invalidTags = tags
-    .slice(0, 13)
-    .filter((tag) => {
-      const wordCount = tag.split(' ').length;
-      return wordCount === 1 || wordCount > 5;
-    });
-
-  if (invalidTags.length > 3) {
-    console.warn(`Warning: Found ${invalidTags.length} tags that may be too short or too long: ${invalidTags.join(', ')}`);
-  }
-
   return {
-    productTitle: title.slice(0, 140),
+    productTitle: title.slice(0, 200),
     productDescription: description,
     tags: tags.slice(0, 13),
   };
@@ -104,28 +92,28 @@ export async function POST(request: NextRequest) {
 
     const groq = new Groq({ apiKey: groqApiKey });
     
-    const systemPrompt = `You are an Etsy SEO expert with 10+ years of experience optimizing product listings for maximum visibility and sales. Your task is to generate professional, high-converting Etsy listings.
+    const systemPrompt = `You are a Merch by Amazon SEO expert specializing in print-on-demand t-shirt, hoodie, and apparel design optimization. Your task is to generate high-converting Merch by Amazon product listings.
 
 CRITICAL RULES:
-1. TITLE (140 char max): Use ALL characters available. Include primary keyword, material, style, and benefit. Example: "Handmade Ceramic Coffee Mug - Unique Morning Gift for Her, Customizable Quote Office Mug"
-2. DESCRIPTION (250+ words): Write like a professional copywriter. Start with PRIMARY benefit. Include: material, dimensions, care instructions, style/aesthetic, who it's for, gift suitability, and unique selling points. NO generic filler.
-3. TAGS (13 long-tail keywords): MUST be 2-4 word phrases that real Etsy buyers search. Examples: "ceramic coffee mug", "handmade gift for her", "office desk decor". NO single words. NO overly broad terms. NO variations of same keyword.
+1. TITLE (up to 200 chars): Include multiple keywords naturally. Format: "Primary Keyword - Secondary Keyword [Design Style]". Examples: "Dog Lover Funny Tshirt - Gifts for Dog Mom, Cute Dog Apparel"
+2. DESCRIPTION (150-300 words): Focus on design quality, versatility, and target audience. Emphasize: who wears this, occasions/events, material quality, comfortable fit, perfect gift. Avoid generic filler.
+3. TAGS (13 keywords): MUST include niche keywords, audience keywords, occasion keywords, and lifestyle keywords. 1-3 words each. Examples: "dog lover gifts", "funny tshirt", "dog mom apparel", "pet lover gifts", "animal lover clothing".
 
-TAGS STRATEGY:
-- Mix of high-search-volume (common) and niche long-tail phrases
-- Include buyer intent keywords: "gift for", "personalized", "handmade", etc.
-- Include material + product keywords: "ceramic mug", "leather jacket", etc.
-- Include use-case keywords: "office decor", "kitchen gift", "wedding favor", etc.
-- Include style keywords: "vintage style", "modern minimalist", "boho chic", etc.
+TAGS STRATEGY for Merch:
+- Target audience: "dog lovers", "cat owners", "plant parents", "coffee lovers"
+- Design style: "funny tshirt", "cute apparel", "witty design", "humorous clothing"
+- Occasions: "birthday gift", "holiday gift", "christmas apparel", "father's day"
+- Niche categories: "pet lover", "animal lover", "hobby shirts"
+- Lifestyle: "casual wear", "comfortable clothing", "everyday wear"
 
 Return ONLY valid JSON. No markdown, no explanation.`;
 
-    const userPrompt = `Generate a professional Etsy listing for: "${productName}"
+    const userPrompt = `Generate a professional Merch by Amazon listing for a design about: "${productName}"
 
 Requirements:
-- Title: Exactly 140 characters (count every character including spaces). Make it keyword-rich and compelling.
-- Description: 250-400 words. Niche-specific, emphasize unique value. Include what the buyer gets, who it's for, and why it's special.
-- Tags: 13 long-tail keyword phrases (2-4 words each). Real phrases people search on Etsy, not generic terms.
+- Title: 50-150 characters. Include primary keyword, design style, and benefit. Make it keyword-rich and compelling.
+- Description: 200-300 words. Focus on design quality and who should wear it. Include fit/comfort, perfect for gifts/occasions.
+- Tags: 13 relevant keywords. Mix of audience targets, design style, occasions, and lifestyle keywords (1-3 words each).
 
 Return JSON with keys: productTitle, productDescription, tags (array of 13 strings).`;
 

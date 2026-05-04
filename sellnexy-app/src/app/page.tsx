@@ -37,6 +37,7 @@ export default function Home() {
   const [savedListings, setSavedListings] = useState<SavedListing[]>([]);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [savingListing, setSavingListing] = useState(false);
+  const [marketplace, setMarketplace] = useState<'etsy' | 'merch'>('etsy');
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -45,7 +46,8 @@ export default function Home() {
     setError('');
 
     try {
-      const response = await fetch('/api/generate', {
+      const endpoint = marketplace === 'etsy' ? '/api/generate/etsy' : '/api/generate/merch';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,11 +102,12 @@ export default function Home() {
         $createdAt: new Date().toISOString(),
       };
 
-      // Save to localStorage
-      const stored = localStorage.getItem('etsygang-listings');
+      // Save to localStorage with marketplace key
+      const storageKey = marketplace === 'etsy' ? 'etsygang-listings-etsy' : 'etsygang-listings-merch';
+      const stored = localStorage.getItem(storageKey);
       const listings = stored ? JSON.parse(stored) : [];
       const updated = [newListing, ...listings];
-      localStorage.setItem('etsygang-listings', JSON.stringify(updated));
+      localStorage.setItem(storageKey, JSON.stringify(updated));
 
       // Update state
       setSavedListings(updated);
@@ -119,8 +122,9 @@ export default function Home() {
   async function fetchListings() {
     setDashboardLoading(true);
     try {
-      // Load from localStorage
-      const stored = localStorage.getItem('etsygang-listings');
+      // Load from localStorage with marketplace key
+      const storageKey = marketplace === 'etsy' ? 'etsygang-listings-etsy' : 'etsygang-listings-merch';
+      const stored = localStorage.getItem(storageKey);
       const listings = stored ? JSON.parse(stored) : [];
       setSavedListings(listings);
     } catch (error) {
@@ -133,11 +137,12 @@ export default function Home() {
 
   async function handleDeleteListing(id: string) {
     try {
-      // Remove from localStorage
-      const stored = localStorage.getItem('etsygang-listings');
+      // Remove from localStorage with marketplace key
+      const storageKey = marketplace === 'etsy' ? 'etsygang-listings-etsy' : 'etsygang-listings-merch';
+      const stored = localStorage.getItem(storageKey);
       const listings = stored ? JSON.parse(stored) : [];
       const updated = listings.filter((l: SavedListing) => l.$id !== id);
-      localStorage.setItem('etsygang-listings', JSON.stringify(updated));
+      localStorage.setItem(storageKey, JSON.stringify(updated));
       
       // Update state
       setSavedListings(updated);
@@ -150,7 +155,14 @@ export default function Home() {
     if (activeTab === 'dashboard') {
       fetchListings();
     }
-  }, [activeTab]);
+    // Reset form when switching tabs
+    if (activeTab === 'generator') {
+      setProductName('');
+      setResult(null);
+      setShowResults(false);
+      setError('');
+    }
+  }, [activeTab, marketplace]);
 
   return (
     <main className="min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100">
@@ -165,35 +177,69 @@ export default function Home() {
           />
         </header>
 
-        <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={() => setActiveTab('generator')}
-            className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.2em] transition ${
-              activeTab === 'generator'
-                ? 'border-amber-400/30 bg-amber-400/10 text-amber-200'
-                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-            }`}
-          >
-            Generator
-          </button>
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.2em] transition ${
-              activeTab === 'dashboard'
-                ? 'border-amber-400/30 bg-amber-400/10 text-amber-200'
-                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-            }`}
-          >
-            Dashboard
-          </button>
+        <div className="mb-4 flex flex-col items-center justify-center gap-3">
+          {/* Marketplace Selector */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setMarketplace('etsy');
+                setActiveTab('generator');
+              }}
+              className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+                marketplace === 'etsy'
+                  ? 'border-amber-400/30 bg-amber-400/10 text-amber-200'
+                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              Etsy
+            </button>
+            <button
+              onClick={() => {
+                setMarketplace('merch');
+                setActiveTab('generator');
+              }}
+              className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+                marketplace === 'merch'
+                  ? 'border-blue-400/30 bg-blue-400/10 text-blue-200'
+                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              Merch by Amazon
+            </button>
+          </div>
+
+          {/* Tab Selector */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => setActiveTab('generator')}
+              className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+                activeTab === 'generator'
+                  ? 'border-amber-400/30 bg-amber-400/10 text-amber-200'
+                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              Generator
+            </button>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+                activeTab === 'dashboard'
+                  ? 'border-amber-400/30 bg-amber-400/10 text-amber-200'
+                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              Dashboard
+            </button>
+          </div>
         </div>
+
             {activeTab === 'generator' ? (
               <>
               <section id="generator" className="w-full rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/20 backdrop-blur-2xl">
                 <div className="mb-4 border-b border-white/10 pb-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-200">Generator</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">Etsy SEO Generator</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-400">Enter a product name and generate a complete Etsy listing with an optimized title, description, and 13 SEO-ready tags.</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">{marketplace === 'etsy' ? 'Etsy' : 'Merch by Amazon'} SEO Generator</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-400">Enter a product name and generate a complete {marketplace === 'etsy' ? 'Etsy listing' : 'Merch by Amazon design'} with an optimized title, description, and 13 SEO-ready tags.</p>
                 </div>
 
                 <form className="space-y-4" onSubmit={handleSubmit}>
@@ -309,7 +355,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-center text-sm text-slate-400">
-                    Your generated Etsy copy will appear here.
+                    Your generated {marketplace === 'etsy' ? 'Etsy' : 'Merch by Amazon'} copy will appear here.
                   </div>
                 )}
               </section>
@@ -318,8 +364,8 @@ export default function Home() {
             <section id="dashboard" className="w-full rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/20 backdrop-blur-2xl">
               <div className="mb-4 border-b border-white/10 pb-4">
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-200">Dashboard</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Saved Listings</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-400">View all your generated Etsy listings. Total: <span className="font-semibold text-amber-200">{savedListings.length}</span></p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">{marketplace === 'etsy' ? 'Etsy' : 'Merch by Amazon'} Saved Listings</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-400">View all your generated {marketplace === 'etsy' ? 'Etsy listings' : 'Merch by Amazon designs'}. Total: <span className="font-semibold text-amber-200">{savedListings.length}</span></p>
               </div>
 
               {dashboardLoading ? (
