@@ -1,47 +1,34 @@
-import { getDatabases } from '@/lib/appwrite';
+import { appwriteFetch, getAppwriteConfig } from '@/lib/appwrite';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-const APPWRITE_DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-const APPWRITE_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID;
-
 export async function GET() {
   try {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_COLLECTION_ID) {
-      return NextResponse.json(
-        { error: 'Database configuration missing' },
-        { status: 500 }
-      );
-    }
+    const config = await getAppwriteConfig();
 
-    const databases = getDatabases();
-    const response = await databases.listDocuments(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_COLLECTION_ID,
-      []
+    const response = await appwriteFetch(
+      `/databases/${config.databaseId}/collections/${config.collectionId}/documents`
     );
 
-    const listings = response.documents.map((doc) => {
-      const record = doc as {
-        $id: string;
-        $createdAt: string;
-        productTitle?: unknown;
-        productDescription?: unknown;
-        tags?: unknown;
-      };
-
+    const listings = (response.documents || []).map((doc: {
+      $id: string;
+      $createdAt: string;
+      productTitle?: unknown;
+      productDescription?: unknown;
+      tags?: unknown;
+    }) => {
       return {
-        $id: record.$id,
-        productTitle: typeof record.productTitle === 'string' ? record.productTitle : '',
+        $id: doc.$id,
+        productTitle: typeof doc.productTitle === 'string' ? doc.productTitle : '',
         productDescription:
-          typeof record.productDescription === 'string' ? record.productDescription : '',
-        tags: typeof record.tags === 'string'
-          ? record.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
-          : Array.isArray(record.tags)
-            ? record.tags.filter((tag): tag is string => typeof tag === 'string')
+          typeof doc.productDescription === 'string' ? doc.productDescription : '',
+        tags: typeof doc.tags === 'string'
+          ? doc.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+          : Array.isArray(doc.tags)
+            ? doc.tags.filter((tag): tag is string => typeof tag === 'string')
             : [],
-        $createdAt: record.$createdAt,
+        $createdAt: doc.$createdAt,
       };
     });
 
@@ -67,18 +54,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_COLLECTION_ID) {
-      return NextResponse.json(
-        { error: 'Database configuration missing' },
-        { status: 500 }
-      );
-    }
+    const config = await getAppwriteConfig();
 
-    const databases = getDatabases();
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_COLLECTION_ID,
-      documentId
+    await appwriteFetch(
+      `/databases/${config.databaseId}/collections/${config.collectionId}/documents/${documentId}`,
+      { method: 'DELETE' }
     );
 
     return NextResponse.json(

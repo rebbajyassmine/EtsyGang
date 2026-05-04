@@ -1,8 +1,7 @@
-import { ID } from 'appwrite';
 import Groq from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getDatabases } from '@/lib/appwrite';
+import { appwriteFetch, getAppwriteConfig } from '@/lib/appwrite';
 
 export const runtime = 'edge';
 
@@ -118,17 +117,21 @@ export async function POST(request: NextRequest) {
     const parsed = JSON.parse(extractJsonPayload(content)) as unknown;
     const listing = normalizeListing(parsed);
 
-    const databases = getDatabases();
-    const document = await databases.createDocument(
-      databaseId,
-      collectionId,
-      ID.unique(),
+    // Use Appwrite REST API to save the document (no SDK needed)
+    const config = await getAppwriteConfig();
+    const document = await appwriteFetch(
+      `/databases/${config.databaseId}/collections/${config.collectionId}/documents`,
       {
-        productName,
-        productTitle: listing.productTitle,
-        productDescription: listing.productDescription,
-        tags: listing.tags.join(', '),
-      },
+        method: 'POST',
+        body: JSON.stringify({
+          data: {
+            productName,
+            productTitle: listing.productTitle,
+            productDescription: listing.productDescription,
+            tags: listing.tags.join(', '),
+          },
+        }),
+      }
     );
 
     return NextResponse.json({
