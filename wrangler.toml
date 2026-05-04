@@ -1,12 +1,12 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "sellnexy-app"
+name = "etsygang"
 type = "javascript"
 main = ".wrangler/tmp/bundle-8a5da4ce-5b46-4476-8a94-4a69df825ecc/index.js"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production]
-name = "sellnexy-app"
+name = "etsygang"
 vars = {}
 compatibility_flags = ["nodejs_compat"]
 
