@@ -1,7 +1,15 @@
 "use client";
 
+import {
+  SignInButton,
+  SignUpButton,
+  useAuth,
+  UserButton,
+} from '@clerk/nextjs';
 import Image from 'next/image';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 
 type ListingResponse = {
   productTitle: string;
@@ -27,6 +35,7 @@ type SavedListing = {
 };
 
 export default function Home() {
+  const { isLoaded, isSignedIn } = useAuth();
   const [productName, setProductName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -170,15 +179,38 @@ export default function Home() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(251,191,36,0.08),_transparent_24%),linear-gradient(180deg,_#0f1724_0%,_#0b1220_50%,_#0f1724_100%)]" />
 
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-6 lg:px-8 lg:py-8">
-        <header className="mb-5 flex items-center justify-center rounded-2xl border border-white/8 bg-white/5/5 px-4 py-3 backdrop-blur-xl">
-          <Image
-            src="/etsy-gang-logo.svg"
-            alt="Etsy Gang"
-            width={320}
-            height={96}
-            priority
-            className="h-20 w-auto max-w-full object-contain sm:h-24"
-          />
+        <header className="mb-5 flex flex-col gap-4 rounded-2xl border border-white/8 bg-white/5/5 px-4 py-3 backdrop-blur-xl md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center justify-center md:justify-start">
+            <Image
+              src="/etsy-gang-logo.svg"
+              alt="Etsy Gang"
+              width={320}
+              height={96}
+              priority
+              className="h-20 w-auto max-w-full object-contain sm:h-24"
+            />
+          </div>
+
+          <div className="flex items-center justify-center gap-2 md:justify-end">
+            {isLoaded && !isSignedIn ? (
+              <>
+              <SignInButton mode="modal">
+                <Button variant="outline" size="sm">Sign in</Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button size="sm">Create account</Button>
+              </SignUpButton>
+              </>
+            ) : null}
+            {isLoaded && isSignedIn ? (
+              <>
+              <span className="hidden text-xs uppercase tracking-[0.24em] text-slate-400 sm:inline">
+                Account
+              </span>
+              <UserButton />
+              </>
+            ) : null}
+          </div>
         </header>
 
         <div className="mb-4 flex flex-col items-center justify-center gap-3">
