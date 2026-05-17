@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 type ListingResponse = {
   productTitle: string;
@@ -119,7 +120,7 @@ export default function Home() {
     }
   }
 
-  async function fetchListings() {
+  const fetchListings = useCallback(async () => {
     setDashboardLoading(true);
     try {
       // Load from localStorage with marketplace key
@@ -133,7 +134,7 @@ export default function Home() {
     } finally {
       setDashboardLoading(false);
     }
-  }
+  }, [marketplace]);
 
   async function handleDeleteListing(id: string) {
     try {
@@ -153,16 +154,16 @@ export default function Home() {
 
   useEffect(() => {
     if (activeTab === 'dashboard') {
-      fetchListings();
+      void fetchListings();
     }
-    // Reset form when switching tabs
+
     if (activeTab === 'generator') {
       setProductName('');
       setResult(null);
       setShowResults(false);
       setError('');
     }
-  }, [activeTab, marketplace]);
+  }, [activeTab, fetchListings]);
 
   return (
     <main className="min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100">
@@ -170,9 +171,12 @@ export default function Home() {
 
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-6 lg:px-8 lg:py-8">
         <header className="mb-5 flex items-center justify-center rounded-2xl border border-white/8 bg-white/5/5 px-4 py-3 backdrop-blur-xl">
-          <img
+          <Image
             src="/etsy-gang-logo.svg"
             alt="Etsy Gang"
+            width={320}
+            height={96}
+            priority
             className="h-20 w-auto max-w-full object-contain sm:h-24"
           />
         </header>
