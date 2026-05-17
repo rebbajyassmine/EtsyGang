@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Etsy Gang | SEO + Background Remover",
+  title: "Etsy Gang | AI SEO Studio",
   description:
-    "Generate Etsy SEO titles, descriptions, tags, and remove image backgrounds with a pro workflow.",
+    "Generate marketplace-ready Etsy and Merch by Amazon listings with polished AI copy and SEO tags.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 antialiased">{children}</body>
     </html>
   );
 }
